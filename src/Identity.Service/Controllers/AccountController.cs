@@ -1,5 +1,6 @@
 ﻿using Identity.Service.DTO;
 using Identity.Service.Service.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Service.Controllers
@@ -18,6 +19,7 @@ namespace Identity.Service.Controllers
         }
 
         [HttpPost("register")]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Register([FromBody] RegistrationRequestDto model)
         {
 
