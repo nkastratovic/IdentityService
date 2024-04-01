@@ -1,3 +1,6 @@
+using AuthApi.Models;
+using AuthAPI.Service;
+using AuthAPI.Service.IService;
 using Identity.Service.Data;
 using Identity.Service.Entities;
 using Identity.Service.Service;
@@ -13,8 +16,10 @@ builder.Services.AddDbContext<AppDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("ApiSettings:JwtOptions"));
 builder.Services.AddControllers();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
