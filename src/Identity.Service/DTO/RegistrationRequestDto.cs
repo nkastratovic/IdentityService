@@ -22,11 +22,12 @@ namespace Identity.Service.DTO
 
 
         [Required(ErrorMessage = "Password can't be blank")]
-        public string Password { get; set; } = string.Empty;
+        public string? Password { get; set; } = string.Empty;
 
 
         [Required(ErrorMessage = "Confirm Password can't be blank")]
         [Compare("Password", ErrorMessage = "Password and confirm password do not match")]
         public string ConfirmPassword { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
     }
 }

@@ -10,11 +10,12 @@ namespace Identity.Service.Service
     {
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
-
-        public AuthService(AppDbContext db, UserManager<ApplicationUser> userManager)
+        private readonly RoleManager<ApplicationRole> _roleManager;
+        public AuthService(AppDbContext db, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
         {
             _db = db;
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         public async Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto)
@@ -76,14 +77,14 @@ namespace Identity.Service.Service
                         PhoneNumber = userToReturn.PhoneNumber
                     };
 
-                    //if (!_roleManager.RoleExistsAsync(registrationRequestDto.Role.ToUpper()).GetAwaiter().GetResult())
-                    //{
-                    //    //Create role if it does not exist.
-                    //    _roleManager.CreateAsync(new IdentityRole(registrationRequestDto.Role.ToUpper())).GetAwaiter().GetResult();
-                    //}
+                    if (!_roleManager.RoleExistsAsync(registrationRequestDto.Role.ToUpper()).GetAwaiter().GetResult())
+                    {
+                        //Create role if it does not exist.
+                        _roleManager.CreateAsync(new ApplicationRole(registrationRequestDto.Role.ToUpper())).GetAwaiter().GetResult();
+                    }
 
-                    ////Add the specified user to the named role.
-                    //await _userManager.AddToRoleAsync(user, registrationRequestDto.Role.ToUpper());
+                    //Add the specified user to the named role.
+                    await _userManager.AddToRoleAsync(user, registrationRequestDto.Role.ToUpper());
 
                     return "";
                 }
