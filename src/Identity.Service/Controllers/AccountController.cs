@@ -18,6 +18,11 @@ namespace Identity.Service.Controllers
             _response = new AuthenticationResponseDto();
         }
 
+        /// <summary>
+        /// Register a new user
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost("register")]
         [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> Register([FromBody] RegistrationRequestDto model)
@@ -34,6 +39,11 @@ namespace Identity.Service.Controllers
             return Ok(_response);
         }
 
+        /// <summary>
+        /// Login a user
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
         {

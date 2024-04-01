@@ -1,9 +1,10 @@
-﻿using Identity.Service.Entities;
+﻿using Identity.Service.DTO;
+using Identity.Service.Entities;
 
 namespace AuthAPI.Service.IService
 {
     public interface IJwtTokenGenerator
     {
-        string GenerateToken(ApplicationUser applicationUser, IEnumerable<string> roles);
+        LoginResponseDto GenerateToken(ApplicationUser applicationUser, IEnumerable<string> roles);
     }
 }

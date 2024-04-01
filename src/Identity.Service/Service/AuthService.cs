@@ -35,21 +35,11 @@ namespace Identity.Service.Service
 
             //if user was found , Generate JWT Token
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _jwtTokenGenerator.GenerateToken(user, roles);
+            LoginResponseDto loginResponseDto = _jwtTokenGenerator.GenerateToken(user, roles);
 
-            UserDto userDTO = new()
-            {
-                Email = user.Email,
-                ID = user.Id,
-                PersonName = user.PersonName,
-                PhoneNumber = user.PhoneNumber
-            };
-
-            LoginResponseDto loginResponseDto = new LoginResponseDto()
-            {
-                User = userDTO,
-                Token = token
-            };
+            user.RefreshToken = loginResponseDto.RefreshToken;
+            user.RefreshTokenExpirationDateTime = loginResponseDto.RefreshTokenExpirationDateTime;
+            await _userManager.UpdateAsync(user);
 
             return loginResponseDto;
         }
