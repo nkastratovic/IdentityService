@@ -1,7 +1,5 @@
 ﻿using Identity.Service.DTO;
-using Identity.Service.Entities;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using Identity.Service.Service.IService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Service.Controllers
@@ -10,136 +8,43 @@ namespace Identity.Service.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IAuthService _authenticationService;
+        protected AuthenticationResponseDto _response;
 
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<ApplicationRole> roleManager)
+        public AccountController(IAuthService authenticationService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _roleManager = roleManager;
+            _authenticationService = authenticationService;
+            _response = new AuthenticationResponseDto();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="registrationRequestDto"></param>
-        /// <returns></returns>
         [HttpPost("register")]
-        public async Task<ActionResult<ApplicationUser>> PostRegister(RegistrationRequestDto registrationRequestDto)
+        public async Task<IActionResult> Register([FromBody] RegistrationRequestDto model)
         {
-            //Validation
-            if (ModelState.IsValid == false)
+
+            var errorMessage = await _authenticationService.Register(model);
+            if (!string.IsNullOrEmpty(errorMessage))
             {
-                string errorMessage = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return Problem(errorMessage);
+                _response.IsSuccess = false;
+                _response.Message = errorMessage;
+                return BadRequest(_response);
             }
 
-
-            //Create user
-            ApplicationUser user = new ApplicationUser()
-            {
-                Email = registrationRequestDto.Email,
-                PhoneNumber = registrationRequestDto.PhoneNumber,
-                UserName = registrationRequestDto.Email,
-                PersonName = registrationRequestDto.Name
-            };
-
-            IdentityResult result = await _userManager.CreateAsync(user, registrationRequestDto.Password);
-
-            if (result.Succeeded)
-            {
-                //sign-in
-                await _signInManager.SignInAsync(user, isPersistent: false);
-
-                //var authResponse = _jwtService.GenerateJwtToken(user);
-
-                //return Ok(authResponse);
-                return Ok();
-            }
-            else
-            {
-                string errorMessage = string.Join(" | ", result.Errors.Select(e => e.Description)); //error1 | error2
-                return Problem(errorMessage);
-            }
+            return Ok(_response);
         }
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="email"></param>
-        /// <returns></returns>
-        [HttpGet]
-        public async Task<IActionResult> IsEmailAlreadyRegistered(string email)
-        {
-            ApplicationUser? user = await _userManager.FindByEmailAsync(email);
-
-            if (user == null)
-            {
-                return Ok(true);
-            }
-            else
-            {
-                return Ok(false);
-            }
-        }
-
-        [AllowAnonymous]
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="loginRequestDto"></param>
-        /// <returns></returns>
         [HttpPost("login")]
-        public async Task<IActionResult> PostLogin(LoginRequestDto loginRequestDto)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
         {
-            //Validation
-            if (ModelState.IsValid == false)
+            var loginResponse = await _authenticationService.Login(model);
+            if (loginResponse.User == null)
             {
-                string errorMessage = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-                return Problem(errorMessage);
+                _response.IsSuccess = false;
+                _response.Message = "Username or password is incorrect";
+                return BadRequest(_response);
             }
+            _response.Result = loginResponse;
+            return Ok(_response);
 
-
-            var result = await _signInManager.PasswordSignInAsync(loginRequestDto.Email, loginRequestDto.Password, isPersistent: false, lockoutOnFailure: false);
-
-            if (result.Succeeded)
-            {
-                ApplicationUser? user = await _userManager.FindByEmailAsync(loginRequestDto.Email);
-
-                if (user == null)
-                {
-                    return NoContent();
-                }
-
-                //sign-in
-                await _signInManager.SignInAsync(user, isPersistent: false);
-
-                //var authenticationResponse = _jwtService.GenerateJwtToken(user);
-
-                //return Ok(authenticationResponse);
-                return Ok();
-            }
-
-            else
-            {
-                return Problem("Invalid email or password");
-            }
-        }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet("logout")]
-        public async Task<IActionResult> GetLogout()
-        {
-            await _signInManager.SignOutAsync();
-
-            return NoContent();
         }
     }
 }

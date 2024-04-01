@@ -1,5 +1,7 @@
 using Identity.Service.Data;
 using Identity.Service.Entities;
+using Identity.Service.Service;
+using Identity.Service.Service.IService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(option =>
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -26,10 +28,9 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
     options.Password.RequireDigit = true;
 })
  .AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders()
+ .AddDefaultTokenProviders()
  .AddUserStore<UserStore<ApplicationUser, ApplicationRole, AppDbContext, Guid>>()
- .AddRoleStore<RoleStore<ApplicationRole, AppDbContext, Guid>>()
- ;
+ .AddRoleStore<RoleStore<ApplicationRole, AppDbContext, Guid>>();
 
 builder.Services.AddAuthorization(options =>
 {
