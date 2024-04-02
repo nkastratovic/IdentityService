@@ -14,9 +14,7 @@ namespace TestApi.Controllers
         }
 
         [HttpGet]
-
         [Route("{id:int}")]
-
         public IActionResult Get(int id)
         {
             return Ok("Get by id method successfully executed");

@@ -4,6 +4,7 @@ using Identity.Service.DTO;
 using Identity.Service.Entities;
 using Identity.Service.Service.IService;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace Identity.Service.Service
 {
@@ -22,6 +23,11 @@ namespace Identity.Service.Service
             _jwtTokenGenerator = jwtTokenGenerator;
         }
 
+        /// <summary>
+        /// Login
+        /// </summary>
+        /// <param name="loginRequestDto">Login Request</param>
+        /// <returns>Login Response</returns>
         public async Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto)
         {
             var user = _db.ApplicationUsers.FirstOrDefault(u => u.Email.ToLower() == loginRequestDto.Email.ToLower());
@@ -33,7 +39,7 @@ namespace Identity.Service.Service
                 return new LoginResponseDto() { User = null, Token = "" };
             }
 
-            //if user was found , Generate JWT Token
+            //If user was found , generate JWT token
             var roles = await _userManager.GetRolesAsync(user);
             LoginResponseDto loginResponseDto = _jwtTokenGenerator.GenerateToken(user, roles);
 
@@ -44,6 +50,11 @@ namespace Identity.Service.Service
             return loginResponseDto;
         }
 
+        /// <summary>
+        /// Register
+        /// </summary>
+        /// <param name="registrationRequestDto">Registration Request</param>
+        /// <returns>String empty if success</returns>
         public async Task<string> Register(RegistrationRequestDto registrationRequestDto)
         {
             ApplicationUser user = new()
@@ -60,8 +71,6 @@ namespace Identity.Service.Service
                 var result = await _userManager.CreateAsync(user, registrationRequestDto.Password);
                 if (result.Succeeded)
                 {
-                    //AssignRole(registrationRequestDto.Email, registrationRequestDto.Role.ToUpper());
-
                     var userToReturn = _db.ApplicationUsers.First(u => u.UserName == registrationRequestDto.Email);
 
                     UserDto userDto = new()
@@ -72,6 +81,7 @@ namespace Identity.Service.Service
                         PhoneNumber = userToReturn.PhoneNumber
                     };
 
+                    //Assign Role
                     if (!_roleManager.RoleExistsAsync(registrationRequestDto.Role.ToUpper()).GetAwaiter().GetResult())
                     {
                         //Create role if it does not exist.
@@ -93,6 +103,33 @@ namespace Identity.Service.Service
 
             }
             return "Error Encountered";
+        }
+
+        public async Task<LoginResponseDto> GenerateNewAccessToken(TokenModel tokenModel)
+        {
+            LoginResponseDto authenticationResponse = new();
+            ClaimsPrincipal? principal = _jwtTokenGenerator.GetPrincipalFromJwtToken(tokenModel.Token);
+            if (principal != null)
+            {
+                string? email = principal.FindFirstValue(ClaimTypes.Email);
+
+                ApplicationUser? user = await _userManager.FindByEmailAsync(email);
+
+                if (user == null || user.RefreshToken != tokenModel.RefreshToken || user.RefreshTokenExpirationDateTime <= DateTime.UtcNow)
+                {
+                    return new LoginResponseDto() { User = null, Token = "" };
+                }
+                //If user was found , generate JWT token
+                var roles = await _userManager.GetRolesAsync(user);
+                authenticationResponse = _jwtTokenGenerator.GenerateToken(user, roles);
+
+                user.RefreshToken = authenticationResponse.RefreshToken;
+                user.RefreshTokenExpirationDateTime = authenticationResponse.RefreshTokenExpirationDateTime;
+
+                await _userManager.UpdateAsync(user);
+            }
+
+            return authenticationResponse;
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Identity.Service.Controllers
         /// <summary>
         /// Register a new user
         /// </summary>
-        /// <param name="model"></param>
+        /// <param name="model">New user.</param>
         /// <returns></returns>
         [HttpPost("register")]
         [Authorize(Roles = "ADMIN")]
@@ -40,10 +40,10 @@ namespace Identity.Service.Controllers
         }
 
         /// <summary>
-        /// Login a user
+        /// Login a user.
         /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
+        /// <param name="model">Object contains userName and password.</param>
+        /// <returns>LoginResponse object with JWT and refresh token.</returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
         {
@@ -57,6 +57,25 @@ namespace Identity.Service.Controllers
             _response.Result = loginResponse;
             return Ok(_response);
 
+        }
+
+        /// <summary>
+        /// Generate a new JWT token using old expired JWT token and refresh token.
+        /// </summary>
+        /// <param name="tokenModel">Object that contains old expired JWT token and refresh token.</param>
+        /// <returns>LoginResponse object with new JWT and refresh token.</returns>
+        [HttpPost("generate-new-jwt-token")]
+        public async Task<IActionResult> GenerateNewAccessToken(TokenModel tokenModel)
+        {
+            var loginResponse = await _authenticationService.GenerateNewAccessToken(tokenModel);
+            if (loginResponse.User == null)
+            {
+                _response.IsSuccess = false;
+                _response.Message = "Username or password is incorrect";
+                return BadRequest(_response);
+            }
+            _response.Result = loginResponse;
+            return Ok(_response);
         }
     }
 }
