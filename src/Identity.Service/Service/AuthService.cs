@@ -100,11 +100,15 @@ namespace Identity.Service.Service
             }
             catch (Exception ex)
             {
-
+                return ex.Message;
             }
-            return "Error Encountered";
         }
 
+        /// <summary>
+        /// Generate new access token.
+        /// </summary>
+        /// <param name="tokenModel"></param>
+        /// <returns>Authentication Response.</returns>
         public async Task<LoginResponseDto> GenerateNewAccessToken(TokenModel tokenModel)
         {
             LoginResponseDto authenticationResponse = new();

@@ -23,10 +23,10 @@ namespace AuthAPI.Service
         }
 
         /// <summary>
-        /// Generates a JWT token for the user.
+        /// Generates a JWT token.
         /// </summary>
         /// <param name="applicationUser">Application User</param>
-        /// <param name="roles">Role</param>
+        /// <param name="roles">Roles</param>
         /// <returns></returns>
         public LoginResponseDto GenerateToken(ApplicationUser applicationUser, IEnumerable<string> roles)
         {
@@ -87,6 +87,12 @@ namespace AuthAPI.Service
             return Convert.ToBase64String(bytes);
         }
 
+        /// <summary>
+        /// Gets the principal from a JWT token.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="SecurityTokenException"></exception>
         public ClaimsPrincipal? GetPrincipalFromJwtToken(string? token)
         {
             var tokenValidationParameters = new TokenValidationParameters()
@@ -99,7 +105,7 @@ namespace AuthAPI.Service
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Secret)),
 
-                ValidateLifetime = false //should be false
+                ValidateLifetime = false //Should be false!
             };
 
             JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
